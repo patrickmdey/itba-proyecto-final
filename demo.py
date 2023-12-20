@@ -22,13 +22,13 @@ NUM_LABELS = {
 }
 
 
-def generte_review(generator_model, rating, tokenizer, iter, tot):
+def generate_review(generator_model, rating, tokenizer, iter, tot):
     logger.info(f"Generando | Reseña de puntaje {rating} ({iter}/{tot})")
 
     input_text = f"Review of {rating}."
     input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
     generator_model.eval()
-    outputs = generator_model.generate(input_ids, do_sample=True, max_length=100).to(
+    outputs = generator_model.generate(input_ids, do_sample=True, max_length=40).to( #TOKENS: eran 100
         device
     )
 
@@ -43,14 +43,9 @@ def classify_review(classification_pipeline, review):
 def reset_files():
     if not os.path.exists("out"):
         os.mkdir("out")
-
-    with open("out/correct_reviews.csv", "w") as correct_file, open(
-        "out/wrong_reviews.csv", "w"
-    ) as wrong_file:
-        correct_file.write("real;pred;review\n")
-        wrong_file.write("real;pred;review\n")
-        correct_file.close()
-        wrong_file.close()
+    else:
+        for file in os.listdir("out"):
+            os.remove(f"out/{file}")
 
 
 def sleep_for_read():
@@ -104,9 +99,12 @@ if __name__ == "__main__":
 
     #### DEMO ####
 
+    reset = False
     # reset files before begining
     if len(sys.argv) > 1 and sys.argv[1] == "reset":
         reset_files()
+        reset = True
+        
 
     rating = input("Ingresa un puntaje del 1 al 5: ")
 
@@ -116,42 +114,50 @@ if __name__ == "__main__":
     with open(f"out/correct_reviews_of_{rating}.csv", "a") as correct_file, open(
         f"out/wrong_reviews_of_{rating}.csv", "a"
     ) as wrong_file:
+        
+        if reset:
+            correct_file.write("Real;Predicha;Reseña\n")
+            wrong_file.write("Real;Predicha;Reseña\n")
+        
         try_counter = 0
 
         rating = int(rating)
 
-        iters = 0
         wrongly_predicted = 0
         correctly_predicted = 0
+        
+        while correctly_predicted == 0:
+            if wrongly_predicted > 0:
+                logger.info(f"Reintentando...")
+            iters = 0
+            while iters < 10:
+                review = generate_review(current_model, rating, tokenizer, iters + 1, 10)
+                review = review[0].replace(f"Review of {rating}. ", "")
 
-        while iters < 10:
-            review = generte_review(current_model, rating, tokenizer, iters + 1, 10)
-            review = review[0].replace(f"Review of {rating}. ", "")
+                # print_with_enter(review, "yellow")
 
-            # print_with_enter(review, "yellow")
+                # sleep_for_read()
 
-            # sleep_for_read()
+                predicted = classify_review(classification_pipeline, review)
+                if predicted != rating:
+                    wrongly_predicted += 1
+                    print_with_enter(
+                        f"Predicción Erronea | Real: {rating} | Predicha: {predicted}",
+                        "red",
+                    )
 
-            predicted = classify_review(classification_pipeline, review)
-            if predicted != rating:
-                wrongly_predicted += 1
-                print_with_enter(
-                    f"Predicción Erronea | Real: {rating} | Predicha: {predicted}",
-                    "red",
-                )
+                    wrong_file.write(f"{rating};{predicted};{review}\n")
+                else:
+                    correctly_predicted += 1
+                    print_with_enter(
+                        f"Predicción correcta | Real: {rating} | Predicha: {predicted}",
+                        "yellow",
+                    )
 
-                wrong_file.write(f"{rating};{predicted};{review}\n")
-            else:
-                correctly_predicted += 1
-                print_with_enter(
-                    f"Predicción correcta | Real: {rating} | Predicha: {predicted}",
-                    "green",
-                )
+                    correct_file.write(f"{rating};{predicted};{review}\n")
 
-                correct_file.write(f"{rating};{predicted};{review}\n")
-
-            iters += 1
-            # os.system("cls" if os.name == "nt" else "clear")
+                iters += 1
+                # os.system("cls" if os.name == "nt" else "clear")
 
         print(f"Correctly predicted: {correctly_predicted}")
         print(f"Wrongly predicted: {wrongly_predicted}")
