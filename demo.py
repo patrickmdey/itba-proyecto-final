@@ -72,9 +72,11 @@ def print_with_enter(msg, color):
 if __name__ == "__main__":
     logger.info("DEMO: Generate review and classify with it")
     gpt_checkpoint = "distilgpt2"
-    gpt_model_path = "models/best_gpt2"
+    # gpt_model_path = "models/best_gpt2"
+    gpt_model_path = "Patrickmdey/pillarbox-best-gpt2"
 
-    bert_model_path = "models/best_bert"
+    # bert_model_path = "models/best_bert"
+    bert_model_path = "Patrickmdey/pillarbox-best-bert"
     bert_tokenizer = "distilbert-base-uncased"
 
     device = 0
