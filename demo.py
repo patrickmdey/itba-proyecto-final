@@ -28,7 +28,7 @@ def generate_review(generator_model, rating, tokenizer, iter, tot):
     input_text = f"Review of {rating}."
     input_ids = tokenizer.encode(input_text, return_tensors="pt").to(device)
     generator_model.eval()
-    outputs = generator_model.generate(input_ids, do_sample=True, max_length=40).to( #TOKENS: eran 100
+    outputs = generator_model.generate(input_ids, do_sample=True, max_length=80).to( #TOKENS: eran 100
         device
     )
 
@@ -126,12 +126,14 @@ if __name__ == "__main__":
         wrongly_predicted = 0
         correctly_predicted = 0
         
+        amount = 20
+        
         while correctly_predicted == 0:
             if wrongly_predicted > 0:
                 logger.info(f"Reintentando...")
             iters = 0
-            while iters < 10:
-                review = generate_review(current_model, rating, tokenizer, iters + 1, 10)
+            while iters < amount:
+                review = generate_review(current_model, rating, tokenizer, iters + 1, amount)
                 review = review[0].replace(f"Review of {rating}. ", "")
 
                 # print_with_enter(review, "yellow")
