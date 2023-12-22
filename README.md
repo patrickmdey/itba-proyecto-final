@@ -16,7 +16,7 @@ Este problema se agrava en situaciones donde la disponibilidad de datos confiabl
 
 ### Tutor
 
-- [Francisco Pérez Sammartino](https://github.com/matiaslombardi)
+- Francisco Pérez Sammartino
 
 ### Fecha de Presentación
 
